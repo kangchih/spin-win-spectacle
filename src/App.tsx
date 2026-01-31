@@ -17,6 +17,9 @@ const initialStorage = {
   participants: [],
 };
 
+// Base path for GitHub Pages deployment
+const basename = import.meta.env.BASE_URL;
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -26,7 +29,7 @@ const App = () => (
         id={ROOM_ID}
         initialStorage={initialStorage}
       >
-        <BrowserRouter>
+        <BrowserRouter basename={basename}>
           <Routes>
             <Route path="/" element={<Index />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
