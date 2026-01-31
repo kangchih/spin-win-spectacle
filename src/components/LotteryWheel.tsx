@@ -1,9 +1,10 @@
-import { motion } from 'framer-motion';
-import { useCallback, useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useCallback, useState, useMemo, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Participant } from '@/store/participantsStore';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 interface LotteryWheelProps {
   participants: Participant[];
@@ -29,9 +30,11 @@ export const LotteryWheel = ({
   onStartSpin,
 }: LotteryWheelProps) => {
   const [rotation, setRotation] = useState(0);
-  const [spinPower, setSpinPower] = useState([10]); // 5-15 seconds
+  const [spinPower, setSpinPower] = useState([20]); // 10-30 seconds
   const [winner, setWinner] = useState<Participant | null>(null);
-  const [phase, setPhase] = useState<'idle' | 'spinning' | 'winner'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'spinning' | 'zooming' | 'winner'>('idle');
+  const [prizeName, setPrizeName] = useState('');
+  const [zoomScale, setZoomScale] = useState(1);
 
   const segmentAngle = participants.length > 0 ? 360 / participants.length : 360;
 
@@ -63,11 +66,12 @@ export const LotteryWheel = ({
   }, []);
 
   const startSpin = useCallback(() => {
-    if (participants.length < 2 || phase === 'spinning') return;
+    if (participants.length < 2 || phase === 'spinning' || phase === 'zooming') return;
 
     onStartSpin();
     setPhase('spinning');
     setWinner(null);
+    setZoomScale(1);
 
     // Random winner index
     const winnerIndex = Math.floor(Math.random() * participants.length);
@@ -75,15 +79,22 @@ export const LotteryWheel = ({
     // Calculate final rotation
     // We want the winner segment to end up at the top (where pointer is)
     // Pointer is at top (0 degrees), segments are drawn clockwise
-    const baseSpins = 5 + Math.floor(spinPower[0] / 3); // 5-10 full rotations based on power
+    const baseSpins = 6 + Math.floor(spinPower[0] / 5); // 8-12 full rotations based on power
     const winnerAngle = winnerIndex * segmentAngle + segmentAngle / 2;
     // To land on winner, we need to rotate so that segment is at top (360 - angle)
     const finalAngle = baseSpins * 360 + (360 - winnerAngle);
     
     setRotation(prev => prev + finalAngle);
 
-    // Duration based on power slider (5-15 seconds)
+    // Duration based on power slider (10-30 seconds)
     const duration = spinPower[0] * 1000;
+    
+    // Start zoom effect 3 seconds before end
+    const zoomStartTime = Math.max(duration - 3000, duration * 0.7);
+    
+    setTimeout(() => {
+      setPhase('zooming');
+    }, zoomStartTime);
 
     setTimeout(() => {
       setPhase('winner');
@@ -93,9 +104,24 @@ export const LotteryWheel = ({
     }, duration);
   }, [participants, phase, spinPower, segmentAngle, onSpinComplete, onStartSpin, triggerConfetti]);
 
+  // Zoom animation effect
+  useEffect(() => {
+    if (phase === 'zooming') {
+      const zoomInterval = setInterval(() => {
+        setZoomScale(prev => Math.min(prev + 0.02, 1.8));
+      }, 50);
+      return () => clearInterval(zoomInterval);
+    } else if (phase === 'winner') {
+      setZoomScale(1.8);
+    } else {
+      setZoomScale(1);
+    }
+  }, [phase]);
+
   const resetWheel = () => {
     setPhase('idle');
     setWinner(null);
+    setZoomScale(1);
   };
 
   // Generate wheel segments
@@ -167,8 +193,17 @@ export const LotteryWheel = ({
 
   return (
     <div className="flex flex-col items-center gap-8">
-      {/* Wheel container */}
-      <div className="relative">
+      {/* Wheel container with zoom effect */}
+      <motion.div 
+        className="relative"
+        animate={{ 
+          scale: zoomScale,
+        }}
+        transition={{ 
+          duration: 0.3,
+          ease: "easeOut"
+        }}
+      >
         {/* Outer glow ring */}
         <div className="absolute inset-[-20px] rounded-full bg-gradient-to-r from-primary via-casino-red to-primary opacity-50 blur-xl animate-pulse" />
         
@@ -225,42 +260,64 @@ export const LotteryWheel = ({
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
       {/* Winner announcement */}
-      {phase === 'winner' && winner && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="text-center p-8 rounded-2xl bg-gradient-to-br from-primary/30 to-casino-red/30 border-4 border-primary animate-winner-pulse"
-        >
-          <p className="text-2xl text-muted-foreground mb-2">🎉 恭喜中獎 🎉</p>
-          <p className="text-5xl md:text-7xl font-orbitron font-bold text-primary text-glow-gold">
-            {winner.name}
-          </p>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {phase === 'winner' && winner && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            className="text-center p-8 rounded-2xl bg-gradient-to-br from-primary/30 to-casino-red/30 border-4 border-primary animate-winner-pulse"
+          >
+            <p className="text-2xl text-muted-foreground mb-2">🎉 恭喜中獎 🎉</p>
+            {prizeName && (
+              <p className="text-xl text-primary mb-3 font-orbitron">
+                🏆 {prizeName} 🏆
+              </p>
+            )}
+            <p className="text-5xl md:text-7xl font-orbitron font-bold text-primary text-glow-gold">
+              {winner.name}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Controls */}
       <div className="w-full max-w-md space-y-6">
-        {/* Power slider */}
+        {/* Prize input and Power slider */}
         {phase === 'idle' && (
-          <div className="space-y-3 p-4 rounded-xl bg-card/80 border border-primary/30">
-            <div className="flex justify-between items-center">
-              <Label className="text-lg font-orbitron text-primary">🎯 力道控制</Label>
-              <span className="text-primary font-bold font-orbitron">{spinPower[0]} 秒</span>
+          <div className="space-y-4">
+            {/* Prize name input */}
+            <div className="space-y-2 p-4 rounded-xl bg-card/80 border border-primary/30">
+              <Label className="text-lg font-orbitron text-primary">🎁 獎項名稱</Label>
+              <Input
+                value={prizeName}
+                onChange={(e) => setPrizeName(e.target.value)}
+                placeholder="輸入獎項名稱（如：頭獎 iPhone 16）"
+                className="text-center"
+              />
             </div>
-            <Slider
-              value={spinPower}
-              onValueChange={setSpinPower}
-              min={5}
-              max={15}
-              step={1}
-              className="py-2"
-            />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>輕輕轉</span>
-              <span>用力轉！</span>
+            
+            {/* Power slider */}
+            <div className="space-y-3 p-4 rounded-xl bg-card/80 border border-primary/30">
+              <div className="flex justify-between items-center">
+                <Label className="text-lg font-orbitron text-primary">🎯 力道控制</Label>
+                <span className="text-primary font-bold font-orbitron">{spinPower[0]} 秒</span>
+              </div>
+              <Slider
+                value={spinPower}
+                onValueChange={setSpinPower}
+                min={10}
+                max={30}
+                step={1}
+                className="py-2"
+              />
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>輕輕轉</span>
+                <span>用力轉！</span>
+              </div>
             </div>
           </div>
         )}
@@ -279,9 +336,9 @@ export const LotteryWheel = ({
             </motion.button>
           )}
 
-          {phase === 'spinning' && (
+          {(phase === 'spinning' || phase === 'zooming') && (
             <div className="px-12 py-4 text-2xl font-orbitron font-bold text-primary animate-pulse">
-              轉動中...
+              {phase === 'zooming' ? '🔍 即將揭曉...' : '轉動中...'}
             </div>
           )}
 
