@@ -18,9 +18,9 @@ const Index = () => {
   const [winner, setWinner] = useState<Participant | null>(null);
   const [activeTab, setActiveTab] = useState("register");
 
-  // Get current URL for QR code
+  // Get current URL for QR code (includes base path for GitHub Pages)
   const currentUrl =
-    typeof window !== "undefined" ? window.location.origin : "";
+    typeof window !== "undefined" ? window.location.origin + import.meta.env.BASE_URL : "";
 
   // Convert Liveblocks participants to store format for LotteryWheel
   const storeParticipants = participants.map(toStoreParticipant);

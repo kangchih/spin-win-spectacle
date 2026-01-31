@@ -1,28 +1,28 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useLiveParticipants } from '@/hooks/useLiveParticipants';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useLiveParticipants } from "@/hooks/useLiveParticipants";
+import { toast } from "sonner";
 
 export const RegistrationForm = () => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const { addParticipant } = useLiveParticipants();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error('請輸入您的姓名');
+      toast.error("請輸入您的姓名");
       return;
     }
 
     const success = addParticipant(name);
     if (success) {
-      toast.success('登記成功！祝您好運！🍀');
-      setName('');
+      toast.success("登記成功！祝您好運！🍀");
+      setName("");
     } else {
-      toast.error('此名稱已被登記');
+      toast.error("此名稱已被登記");
     }
   };
 
@@ -39,7 +39,10 @@ export const RegistrationForm = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-foreground mb-2"
+            >
               您的姓名
             </label>
             <Input
