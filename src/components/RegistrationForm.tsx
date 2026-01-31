@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useParticipantsStore } from '@/store/participantsStore';
+import { useLiveParticipants } from '@/hooks/useLiveParticipants';
 import { toast } from 'sonner';
 
 export const RegistrationForm = () => {
   const [name, setName] = useState('');
-  const addParticipant = useParticipantsStore((state) => state.addParticipant);
+  const { addParticipant } = useLiveParticipants();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast.error('請輸入您的姓名');
       return;
@@ -36,7 +36,7 @@ export const RegistrationForm = () => {
         <h2 className="text-2xl font-orbitron font-bold text-primary text-center mb-6 text-glow-gold">
           🎫 登記抽獎
         </h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
@@ -52,7 +52,7 @@ export const RegistrationForm = () => {
               className="w-full"
             />
           </div>
-          
+
           <Button type="submit" variant="casino" size="lg" className="w-full">
             立即登記 🎲
           </Button>

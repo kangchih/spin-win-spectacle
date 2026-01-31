@@ -1,16 +1,14 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useParticipantsStore, Participant } from '@/store/participantsStore';
+import { useLiveParticipants } from '@/hooks/useLiveParticipants';
 
 interface ParticipantsListProps {
   showControls?: boolean;
 }
 
 export const ParticipantsList = ({ showControls = false }: ParticipantsListProps) => {
-  const participants = useParticipantsStore((state) => state.participants);
-  const removeParticipant = useParticipantsStore((state) => state.removeParticipant);
-  const clearAll = useParticipantsStore((state) => state.clearAll);
+  const { participants, removeParticipant, clearAll } = useLiveParticipants();
 
   return (
     <div className="w-full">
@@ -24,7 +22,7 @@ export const ParticipantsList = ({ showControls = false }: ParticipantsListProps
             {participants.length}
           </span>
         </div>
-        
+
         {showControls && participants.length > 0 && (
           <Button
             variant="ghost"
@@ -66,7 +64,7 @@ export const ParticipantsList = ({ showControls = false }: ParticipantsListProps
                     {participant.name}
                   </span>
                 </div>
-                
+
                 {showControls && (
                   <Button
                     variant="ghost"

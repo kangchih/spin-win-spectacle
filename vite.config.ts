@@ -5,6 +5,8 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // GitHub Pages base path (repository name)
+  base: mode === "production" ? "/spin-win-spectacle/" : "/",
   server: {
     host: "::",
     port: 8080,

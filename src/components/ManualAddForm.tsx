@@ -3,14 +3,14 @@ import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useParticipantsStore } from '@/store/participantsStore';
+import { useLiveParticipants } from '@/hooks/useLiveParticipants';
 import { toast } from 'sonner';
 
 export const ManualAddForm = () => {
   const [name, setName] = useState('');
   const [bulkNames, setBulkNames] = useState('');
   const [showBulk, setShowBulk] = useState(false);
-  const addParticipant = useParticipantsStore((state) => state.addParticipant);
+  const { addParticipant } = useLiveParticipants();
 
   const handleAddSingle = (e: React.FormEvent) => {
     e.preventDefault();
